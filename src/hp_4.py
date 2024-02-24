@@ -1,30 +1,8 @@
 # hp_4.py
-#
-from datetime import datetime, timedelta
+from datetime import datetime
 from csv import DictReader, DictWriter
 from collections import defaultdict
 import os
-
-def reformat_dates(old_dates):
-    new_dates = []
-    for date_str in old_dates:
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        new_date_str = date_obj.strftime('%d %b %Y')
-        new_dates.append(new_date_str)
-    return new_dates
-
-def date_range(start, n):
-    if not isinstance(start, str):
-        raise TypeError("start should be a string")
-    if not isinstance(n, int):
-        raise TypeError("n should be an integer")
-
-    start_date = datetime.strptime(start, '%Y-%m-%d')
-    return [start_date + timedelta(days=i) for i in range(n)]
-
-def add_date_range(values, start_date):
-    date_list = date_range(start_date, len(values))
-    return list(zip(date_list, values))
 
 def fees_report(infile, outfile):
     late_fees = defaultdict(float)
@@ -33,7 +11,7 @@ def fees_report(infile, outfile):
         reader = DictReader(file)
         for row in reader:
             date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
-            date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')  # Corrected format here
+            date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')
             if date_returned > date_due:
                 days_late = (date_returned - date_due).days
                 late_fee = days_late * 0.25

@@ -1,42 +1,66 @@
 # hp_4.py
-from datetime import datetime
+
+from datetime import datetime, timedelta
 from csv import DictReader, DictWriter
 from collections import defaultdict
-import os
+
+
+def reformat_dates(old_dates):
+    new_dates = []
+    for date_str in old_dates:
+        dt = datetime.strptime(date_str, '%Y-%m-%d')
+        new_dates.append(dt.strftime('%d %b %Y'))
+    return new_dates
+
+
+def date_range(start, n):
+    if not isinstance(start, str):
+        raise TypeError("start should be a string")
+    if not isinstance(n, int):
+        raise TypeError("n should be an integer")
+    start_date = datetime.strptime(start, '%Y-%m-%d')
+    return [start_date + timedelta(days=i) for i in range(n)]
+
+
+def add_date_range(values, start_date):
+    dates = date_range(start_date, len(values))
+    return list(zip(dates, values))
+
 
 def fees_report(infile, outfile):
-    late_fees = defaultdict(float)
+    pass
 
-    with open(infile, 'r') as file:
-        reader = DictReader(file)
-        for row in reader:
-            date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
-            date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')
-            if date_returned > date_due:
-                days_late = (date_returned - date_due).days
-                late_fee = days_late * 0.25
-                late_fees[row['patron_id']] += late_fee
+import pytest
+from src.hp_4 import reformat_dates, date_range, add_date_range, fees_report
 
-    with open(outfile, 'w', newline='') as file:
-        writer = DictWriter(file, fieldnames=['patron_id', 'late_fees'])
-        writer.writeheader()
-        for patron_id, fee in late_fees.items():
-            writer.writerow({'patron_id': patron_id, 'late_fees': "{:.2f}".format(fee)})
-def get_data_file_path(filename):
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, 'data')
-    return os.path.join(data_dir, filename)
 
-if __name__ == '__main__':
-    try:
-        from src.util import get_data_file_path
-    except ImportError:
-        from util import get_data_file_path
+def test_reformat_dates():
+    old_dates = ['2000-01-01', '2000-01-02', '2000-01-03']
+    expected_dates = ['01 Jan 2000', '02 Jan 2000', '03 Jan 2000']
+    assert reformat_dates(old_dates) == expected_dates
 
-    BOOK_RETURNS_PATH = get_data_file_path('book_returns_short.csv')
-    OUTFILE = 'book_fees.csv'
 
-    fees_report(BOOK_RETURNS_PATH, OUTFILE)
+def test_date_range():
+    start = '2000-01-01'
+    n = 3
+    expected_dates = [
+        datetime(2000, 1, 1),
+        datetime(2000, 1, 2),
+        datetime(2000, 1, 3)
+    ]
+    assert date_range(start, n) == expected_dates
 
-    with open(OUTFILE) as f:
-        print(f.read())
+
+def test_add_date_range():
+    values = [100, 101, 102]
+    start_date = '2000-01-01'
+    expected_result = [
+        (datetime(2000, 1, 1), 100),
+        (datetime(2000, 1, 2), 101),
+        (datetime(2000, 1, 3), 102)
+    ]
+    assert add_date_range(values, start_date) == expected_result
+
+
+def test_fees_report():
+    pass

@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from csv import DictReader, DictWriter
 from collections import defaultdict
 
-def reformat_dates(old_dates):
+def reformat_dates(dates):
     reformatted_dates = []
-    for date_str in old_dates:
+    for date_str in dates:
         datetime_obj = datetime.strptime(date_str, '%Y-%m-%d')
         reformatted_date = datetime_obj.strftime('%d %b %Y')
         reformatted_dates.append(reformatted_date)
@@ -46,7 +46,7 @@ def fees_report(infile, outfile):
             writer = DictWriter(csvfile, fieldnames=['patron_id', 'late_fees'])
             writer.writeheader()
             for patron_id, late_fee in fees.items():
-                writer.writerow({'patron_id': patron_id, 'late_fees': round(late_fee, 2)})  # Round late fee to 2 decimal places
+                writer.writerow({'patron_id': patron_id, 'late_fees': round(late_fee, 2)})
     except FileNotFoundError:
         raise FileNotFoundError(f"Input file '{infile}' not found.")
 
@@ -62,3 +62,4 @@ if __name__ == '__main__':
     fees_report(BOOK_RETURNS_PATH, OUTFILE)
     with open(OUTFILE) as f:
         print(f.read())
+

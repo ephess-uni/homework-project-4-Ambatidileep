@@ -4,7 +4,6 @@ from csv import DictReader, DictWriter
 from collections import defaultdict
 
 def reformat_dates(old_dates):
-
     reformatted_dates = []
     for date_str in old_dates:
         datetime_obj = datetime.strptime(date_str, '%Y-%m-%d')
@@ -13,7 +12,6 @@ def reformat_dates(old_dates):
     return reformatted_dates
 
 def date_range(start, n):
-
     if not isinstance(start, str):
         raise TypeError("start must be a string")
     if not isinstance(n, int):
@@ -34,7 +32,10 @@ def fees_report(infile, outfile):
             fees = defaultdict(float)
             for row in reader:
                 date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
-                date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')
+                try:
+                    date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')
+                except ValueError:
+                    date_returned = datetime.strptime(row['date_returned'], '%m/%d/%y')
                 if date_returned > date_due:
                     days_late = (date_returned - date_due).days
                     patron_id = row['patron_id']
@@ -54,13 +55,10 @@ if __name__ == '__main__':
         from src.util import get_data_file_path
     except ImportError:
         from util import get_data_file_path
-
-
     BOOK_RETURNS_PATH = get_data_file_path('book_returns_short.csv')
 
     OUTFILE = 'book_fees.csv'
 
     fees_report(BOOK_RETURNS_PATH, OUTFILE)
-
     with open(OUTFILE) as f:
         print(f.read())

@@ -46,7 +46,7 @@ def fees_report(infile, outfile):
             writer = DictWriter(csvfile, fieldnames=['patron_id', 'late_fees'])
             writer.writeheader()
             for patron_id, late_fee in fees.items():
-                writer.writerow({'patron_id': patron_id, 'late_fees': round(late_fee, 2)})
+                writer.writerow({'patron_id': patron_id, 'late_fees': round(late_fee, 2)})  # Round late fee to 2 decimal places
     except FileNotFoundError:
         raise FileNotFoundError(f"Input file '{infile}' not found.")
 

@@ -1,56 +1,77 @@
 # hp_4.py
+#
 from datetime import datetime, timedelta
 from csv import DictReader, DictWriter
 from collections import defaultdict
 
-def reformat_dates(dates):
-    reformatted_dates = []
-    for date_str in dates:
-        datetime_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        reformatted_date = datetime_obj.strftime('%d %b %Y')
-        reformatted_dates.append(reformatted_date)
-    return reformatted_dates
+
+def reformat_dates(old_dates):
+    modified_date_list = []
+    for dat in old_dates:
+        modified_date_list.append(datetime.strptime(dat, "%Y-%m-%d").strftime("%d %b %Y"))
+    return modified_date_list
+
 
 def date_range(start, n):
     if not isinstance(start, str):
-        raise TypeError("start must be a string")
-    if not isinstance(n, int):
-        raise TypeError("n must be an integer")
-    start_date = datetime.strptime(start, '%Y-%m-%d')
-    return [start_date + timedelta(days=i) for i in range(n)]
+        raise TypeError
+    elif not isinstance(n, int):
+        raise TypeError
+    else:
+        added_list = []
+        for inc in range(0, n):
+            added_list.append(datetime.strptime(start, "%Y-%m-%d") + timedelta(days=inc))
+        return added_list
+
 
 def add_date_range(values, start_date):
-    if not isinstance(start_date, str):
-        raise TypeError("start_date must be a string")
-    start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
-    return [(start_datetime + timedelta(days=i), value) for i, value in enumerate(values)]
+    added_list = []
+    for i, elem in enumerate(values):
+        dat_list = []
+        dat_list.append(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=i))
+        dat_list.append(elem)
+        added_list.append(tuple(dat_list))
+    return added_list
+
 
 def fees_report(infile, outfile):
-    try:
-        with open(infile, 'r', newline='') as csvfile:
-            reader = DictReader(csvfile)
-            fees = defaultdict(float)
-            for row in reader:
-                date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
-                try:
-                    date_returned = datetime.strptime(row['date_returned'], '%m/%d/%Y')
-                except ValueError:
-                    date_returned = datetime.strptime(row['date_returned'], '%m/%d/%y')
-                if date_returned > date_due:
-                    days_late = (date_returned - date_due).days
-                    patron_id = row['patron_id']
-                    late_fee = days_late * 0.25
-                    fees[patron_id] += late_fee
 
-        with open(outfile, 'w', newline='') as csvfile:
-            writer = DictWriter(csvfile, fieldnames=['patron_id', 'late_fees'])
-            writer.writeheader()
-            for patron_id, late_fee in fees.items():
-                writer.writerow({'patron_id': patron_id, 'late_fees': round(late_fee, 2)})
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Input file '{infile}' not found.")
+    with open(infile) as file:
+        added_list = []
+        read_csv_obj = DictReader(file)
+        for record in read_csv_obj:
+            temp_dict = {}
+            late_fee_days = datetime.strptime(record['date_returned'], '%m/%d/%Y') - datetime.strptime(
+                record['date_due'], '%m/%d/%Y')
+            if (late_fee_days.days > 0):
+                temp_dict["patron_id"] = record['patron_id']
+                temp_dict["late_fees"] = round(late_fee_days.days * 0.25, 2)
+                added_list.append(temp_dict)
+            else:
+                temp_dict["patron_id"] = record['patron_id']
+                temp_dict["late_fees"] = float(0)
+                added_list.append(temp_dict)
 
-if __name__ == '__main__':
+        temp_dict_2 = {}
+        for dict in added_list:
+            key = (dict['patron_id'])
+            temp_dict_2[key] = temp_dict_2.get(key, 0) + dict['late_fees']
+        updated_list = [{'patron_id': key, 'late_fees': value} for key, value in temp_dict_2.items()]
+
+        for dict in updated_list:
+            for key, value in dict.items():
+                if key == "late_fees":
+                    if len(str(value).split('.')[-1]) != 2:
+                        dict[key] = str(value) + "0"
+
+    with open(outfile, "w", newline="") as file:
+        col = ['patron_id', 'late_fees']
+        writer = DictWriter(file, fieldnames=col)
+        writer.writeheader()
+        writer.writerows(updated_list)
+
+if __name__ == '_main_':
+
     try:
         from src.util import get_data_file_path
     except ImportError:
@@ -61,5 +82,4 @@ if __name__ == '__main__':
 
     fees_report(BOOK_RETURNS_PATH, OUTFILE)
     with open(OUTFILE) as f:
-        print(f.read())
-
+       print(f.read())
